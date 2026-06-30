@@ -126,3 +126,17 @@ building these tutorials. Recorded so the next person doesn't rediscover them.
   `dinv.sampling.DPS(denoiser=DRUNet, schedule="vp", num_steps=150, weight=1.0, alpha=1.0,
   minus_one_one=False)` and call `model(y, physics, seed=k)` for distinct samples.
   `dinv.sampling.DiffusionSampler(diff, max_iter=N)` returns `(mean, var)` (decomposable samplers like DDRM).
+
+## Tutorials 8–9 (instability & self-supervised)
+
+- **Instability (8).** A direct post-processing net `G(A_dagger y)` (DnCNN on FBP, **no
+  data-consistency**) trained ~40 epochs on phantoms (64 px, ~50 s) reaches ~20 dB clean. A PGD
+  attack on the measurement (maximise output change; signed-gradient step projected to a norm ball)
+  is **~2.5x more damaging than random noise of equal norm at every budget** (15 %: adversarial
+  19.9 → 17.2 dB with structured ring artifacts; random → 19.3). This is an honest, reproducible
+  instability demo -- not a dramatic "invent a tumor" hallucination, which needs much heavier tuning.
+- **Equivariant Imaging (9) — deliberately not shipped.** EI / self-supervised
+  (`MCLoss` + `EILoss(Rotate(n_trans=...))`, `Trainer(..., metrics=None)`) needs ~150 epochs; on a CPU
+  lecture budget it ran 9 min for 15.2 dB, **below** the 17.3 dB FBP baseline (the upstream example
+  ships a pretrained checkpoint). Rather than mislead, the README points to
+  `examples/self-supervised-learning/demo_equivariant_imaging.py`.

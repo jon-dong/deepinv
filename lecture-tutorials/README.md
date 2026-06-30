@@ -30,6 +30,7 @@ operator — *"here CT's Radon operator plays the role of the PAT operator"*) is
 | 5 | [05_pnp_red](05_pnp_red.ipynb) | §4.8 | L2 · **PnP (DRUNet)** + DPIR · PGD/HQS | [comparison](figures/05_comparison.png) | Keep the physics **D**, swap the hand-crafted prior for a **pretrained denoiser** → a big jump with no per-problem training (PnP **24.2 dB**, DPIR **25.1 dB**). |
 | 6 | [06_direct_unrolled](06_direct_unrolled.ipynb) | §4.5, 4.7 | **unrolled** net, trained end-to-end for one A | [unrolled](figures/06_unrolled.png), [loss](figures/06_loss.png) | Unroll K solver steps into a network and **train it end-to-end** for one operator A (here 10.7 → **16.7 dB**); powerful but **operator-specific**, unlike PnP's plug-in generality. |
 | 7 | [07_diffusion_posterior_uq](07_diffusion_posterior_uq.ipynb) | §4.9–4.10, 5.2 | **generative prior** · DPS posterior sampling | [samples](figures/07_posterior_samples.png), [uncertainty](figures/07_uncertainty.png) | Don't return one image — **sample the posterior**: many plausible x for one y → posterior **mean (MMSE 26.0 dB)** + a per-pixel **uncertainty map that tracks the true error**. |
+| 8 | [08_instability](08_instability.ipynb) | §4.12 | the honest close: instability | [instability](figures/08_instability.png), [sensitivity](figures/08_sensitivity.png) | High clean PSNR ≠ trustworthy: a **worst-case** measurement perturbation injects structured artifacts (19.9 → **17.2 dB**) that random noise of the *same norm* doesn't (→ 19.3) — **~2.5× more sensitive**. Mitigations: keep the physics (data-consistency) + report uncertainty (#7). |
 
 The whole arc on one fixed problem (40-view CT, σ = 0.02 noise, Shepp–Logan phantom):
 
@@ -37,7 +38,9 @@ The whole arc on one fixed problem (40-view CT, σ = 0.02 noise, Shepp–Logan p
 >
 > (and with no prior at all, the pseudo-inverse on a harsher 20-view problem collapses to ~8 dB — notebook 2.)
 
-*Tutorials 6–7 extend the arc to **learned inversion** (an unrolled network trained for one operator) and **uncertainty quantification** (generative posterior sampling). For CPU runtime they use a smaller 64 px problem — and tutorial 7 a light inpainting operator — because diffusion posterior sampling on the heavy CT operator needs a GPU; the concepts are identical.*
+*Tutorials 6–8 extend the arc to **learned inversion** (an unrolled network trained for one operator), **uncertainty quantification** (generative posterior sampling), and an honest look at **instability**. For CPU runtime they use a smaller 64 px problem — and tutorial 7 a light inpainting operator — because diffusion posterior sampling on the heavy CT operator needs a GPU; the concepts are identical.*
+
+**§4.6 Equivariant Imaging / self-supervised (no tutorial here, by design).** Training a reconstructor from measurements alone — core to deepinv (Tachella et al.) — needs ~150 epochs to beat the classical baseline, so a CPU lecture version would land *below* FBP and mislead. Run deepinv's own GPU example instead: [`examples/self-supervised-learning/demo_equivariant_imaging.py`](https://github.com/deepinv/deepinv/blob/main/examples/self-supervised-learning/demo_equivariant_imaging.py) (`dinv.loss.MCLoss` + `dinv.loss.EILoss(dinv.transform.Rotate(...))`, with a pretrained checkpoint).
 
 Each reconstruction figure reports **PSNR** in its title, so "visibly better" is always a number.
 
@@ -65,7 +68,7 @@ scientific stack transitively. Each notebook prints `deepinv.__version__` on imp
 
 ## Layout
 
-- `00_setup.ipynb … 07_diffusion_posterior_uq.ipynb` — the tutorials, runnable top-to-bottom.
+- `00_setup.ipynb … 08_instability.ipynb` — the tutorials, runnable top-to-bottom.
 - [`tutorial_common.py`](tutorial_common.py) — shared helpers imported by every notebook
   (`import tutorial_common as tc`): device, seed, the deck palette, the one hero object
   `tc.load_hero()`, the fixed CT physics `tc.ct_physics()`, `tc.psnr/ssim/title_psnr`,
