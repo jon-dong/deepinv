@@ -1,0 +1,26 @@
+# Pinned environment for the DeepInverse "Inverse Problems" lecture tutorials.
+# Verified end-to-end on CPU (macOS, Python 3.11). The two pins that matter for
+# reproducibility are deepinv and torch; the rest are deepinv dependencies listed
+# at their verified versions.
+#
+#   python -m venv .venv && source .venv/bin/activate
+#   pip install -r requirements.txt
+#   python -m ipykernel install --user --name deepinv-lecture
+#
+# (Students who just want the library: `pip install deepinv==0.4.1` pulls most of
+#  the scientific stack transitively.)
+
+deepinv==0.4.1
+torch==2.9.1
+torchvision==0.24.1
+
+numpy==2.2.6
+scipy==1.16.3
+matplotlib==3.10.7
+scikit-image==0.25.2
+PyWavelets==1.9.0           # only needed for the optional wavelet prior
+
+# notebook tooling (to open / run / re-execute the .ipynb files)
+jupyterlab
+ipykernel==7.1.0
+jupytext==1.19.4            # optional: edit notebooks as paired .py scripts

@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+# intermediate jupytext scripts (notebooks are the source of truth)
+[0-9][0-9]_*.py
+
+# the repo-root .gitignore ignores *.ipynb (deepinv ships sphinx-gallery scripts),
+# but these lecture notebooks ARE the deliverable -- re-include them here.
+!*.ipynb
