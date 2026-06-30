@@ -105,3 +105,24 @@ building these tutorials. Recorded so the next person doesn't rediscover them.
   box phantom): Tikhonov peaks at **λ≈3e-3** (broad plateau, 19.4 dB); TV needs a **small
   λ≈1e-3 with ~300 iterations** to clearly beat Tikhonov (21.4 dB). PnP wants `stepsize≈2.0`
   (≥2.5 diverges) with `g_param≈0.01` over ~80 iterations (24.2 dB).
+
+## Tutorials 6–7 (learned inversion & diffusion UQ)
+
+- **Unrolled (6).** `unfolded_builder` is superseded — build a trainable unrolled net with an optim
+  iteration class and `unfold=True`: `dinv.optim.PGD(stepsize=[1.0]*K, sigma_denoiser=[0.03]*K,
+  trainable_params=["stepsize","sigma_denoiser"], data_fidelity=L2(),
+  prior=PnP(denoiser=DnCNN(in_channels=1,out_channels=1,pretrained=None)), max_iter=K, unfold=True)`.
+  Train via `dinv.Trainer(..., online_measurements=True)` (dataloader yields x; y made on the fly) or a
+  plain loop. Dataset: `dinv.utils.RandomPhantomDataset(size=N, length=M)` — `length` is positional,
+  returns `(1, N, N)` tensors. 64 px / a few dozen steps trains in seconds on CPU and lifts the hero
+  ~10.7 → ~16.7 dB (enough to show the loop; real results need more data/epochs).
+- **Diffusion (7) — CPU reality check.** DPS on the Tomography operator is slow and weak on CPU
+  (15 dB @300 steps/40 s, 17 dB @500 steps/167 s), and **MPS is unavailable** because
+  `aten::grid_sampler_2d_backward` (used by Radon's adjoint) is unimplemented on MPS. DDRM is fast but
+  needs a **decomposable** physics (inpainting/blur, not CT) and is near-deterministic (poor sample
+  diversity). So tutorial 7 runs the **same DPS algorithm on a light decomposable operator** — random
+  inpainting of a natural image at 64 px: 4 samples in ~70 s, posterior **mean (MMSE) ~26 dB beats every
+  single sample (~24.7)**, and the per-pixel std tracks the true error. Use
+  `dinv.sampling.DPS(denoiser=DRUNet, schedule="vp", num_steps=150, weight=1.0, alpha=1.0,
+  minus_one_one=False)` and call `model(y, physics, seed=k)` for distinct samples.
+  `dinv.sampling.DiffusionSampler(diff, max_iter=N)` returns `(mean, var)` (decomposable samplers like DDRM).

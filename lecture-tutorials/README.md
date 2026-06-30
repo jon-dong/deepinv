@@ -28,12 +28,16 @@ operator — *"here CT's Radon operator plays the role of the PAT operator"*) is
 | 3 | [03_tikhonov_l2](03_tikhonov_l2.ipynb) | §3.6–3.9 | L2 · **Tikhonov** · PGD | [λ sweep](figures/03_lambda_sweep.png), [bias–variance](figures/03_bias_variance.png), [convergence](figures/03_convergence.png) | A quadratic prior = damped SVD / Wiener filtering: one knob λ trades noise for blur. Stabilizes, but **cannot recover edges** (peak **19.4 dB**). |
 | 4 | [04_sparsity_tv_fista](04_sparsity_tv_fista.ipynb) | §3.10–3.16 | L2 · **TV** · ISTA/FISTA | [TV vs Tikhonov](figures/04_tv_vs_tikhonov.png), [ISTA vs FISTA](figures/04_ista_vs_fista.png) | A sparsity prior recovers **sharp edges** where L2 blurs (**21.4 dB**); FISTA's momentum converges far faster than ISTA. |
 | 5 | [05_pnp_red](05_pnp_red.ipynb) | §4.8 | L2 · **PnP (DRUNet)** + DPIR · PGD/HQS | [comparison](figures/05_comparison.png) | Keep the physics **D**, swap the hand-crafted prior for a **pretrained denoiser** → a big jump with no per-problem training (PnP **24.2 dB**, DPIR **25.1 dB**). |
+| 6 | [06_direct_unrolled](06_direct_unrolled.ipynb) | §4.5, 4.7 | **unrolled** net, trained end-to-end for one A | [unrolled](figures/06_unrolled.png), [loss](figures/06_loss.png) | Unroll K solver steps into a network and **train it end-to-end** for one operator A (here 10.7 → **16.7 dB**); powerful but **operator-specific**, unlike PnP's plug-in generality. |
+| 7 | [07_diffusion_posterior_uq](07_diffusion_posterior_uq.ipynb) | §4.9–4.10, 5.2 | **generative prior** · DPS posterior sampling | [samples](figures/07_posterior_samples.png), [uncertainty](figures/07_uncertainty.png) | Don't return one image — **sample the posterior**: many plausible x for one y → posterior **mean (MMSE 26.0 dB)** + a per-pixel **uncertainty map that tracks the true error**. |
 
 The whole arc on one fixed problem (40-view CT, σ = 0.02 noise, Shepp–Logan phantom):
 
 > FBP baseline **≈ 15 dB** (streaky) → Tikhonov **19.4** → TV **21.4** → PnP **24.2** → DPIR **25.1 dB**
 >
 > (and with no prior at all, the pseudo-inverse on a harsher 20-view problem collapses to ~8 dB — notebook 2.)
+
+*Tutorials 6–7 extend the arc to **learned inversion** (an unrolled network trained for one operator) and **uncertainty quantification** (generative posterior sampling). For CPU runtime they use a smaller 64 px problem — and tutorial 7 a light inpainting operator — because diffusion posterior sampling on the heavy CT operator needs a GPU; the concepts are identical.*
 
 Each reconstruction figure reports **PSNR** in its title, so "visibly better" is always a number.
 
@@ -61,7 +65,7 @@ scientific stack transitively. Each notebook prints `deepinv.__version__` on imp
 
 ## Layout
 
-- `00_setup.ipynb … 05_pnp_red.ipynb` — the tutorials, runnable top-to-bottom.
+- `00_setup.ipynb … 07_diffusion_posterior_uq.ipynb` — the tutorials, runnable top-to-bottom.
 - [`tutorial_common.py`](tutorial_common.py) — shared helpers imported by every notebook
   (`import tutorial_common as tc`): device, seed, the deck palette, the one hero object
   `tc.load_hero()`, the fixed CT physics `tc.ct_physics()`, `tc.psnr/ssim/title_psnr`,
