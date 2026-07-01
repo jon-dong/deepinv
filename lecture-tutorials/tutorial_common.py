@@ -1,8 +1,8 @@
 """Shared helpers for the DeepInverse "Inverse Problems" lecture tutorials.
 
 Every notebook imports this module so the whole set shares one device, one seed,
-the lecture deck's color palette, the one hero object, a consistent PSNR/SSIM
-readout, and a save-to-``figures/`` helper.
+the lecture deck's color palette, the one shared object, a consistent PSNR/SSIM
+readout, and figure-display helpers.
 
 The spine equation the whole lecture restates, one term at a time:
 
@@ -16,10 +16,6 @@ Tikhonov -> TV/L1 (sparsity) -> Plug-and-Play / RED (a learned denoiser).
 Verified against deepinv 0.4.1 (see ../README.md and ../NOTES.md).
 """
 
-import matplotlib
-
-matplotlib.use("Agg")  # render to files, not a GUI window (safe in notebooks & CI)
-
 # Silence benign warnings BEFORE importing deepinv so the lecture output stays
 # readable: deepinv/torch emit UserWarnings (meshgrid indexing, the deprecated
 # ``.device`` attribute, the Tomography ``normalize`` default) and tqdm warns when
@@ -28,8 +24,6 @@ import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", message=".*IProgress.*")
-
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -96,17 +90,9 @@ SPINE = (
 
 
 # --------------------------------------------------------------------------- #
-# Paths
+# The one shared object: a Shepp-Logan phantom, our CT stand-in.
 # --------------------------------------------------------------------------- #
-HERE = Path(__file__).resolve().parent if "__file__" in globals() else Path.cwd()
-FIG_DIR = HERE / "figures"
-FIG_DIR.mkdir(exist_ok=True)
-
-
-# --------------------------------------------------------------------------- #
-# The one hero object: a Shepp-Logan phantom, our photoacoustic/CT stand-in.
-# --------------------------------------------------------------------------- #
-def load_hero(size: int = 128) -> torch.Tensor:
+def load_object(size: int = 128) -> torch.Tensor:
     """Return the shared ``(1, 1, size, size)`` phantom in ``[0, 1]`` on ``DEVICE``.
 
     This is the recurring "object" x across tutorials 2-5, so the narrative has a
@@ -118,11 +104,10 @@ def load_hero(size: int = 128) -> torch.Tensor:
 
 
 # --------------------------------------------------------------------------- #
-# The fixed physics D we keep across tutorials 2-5 (sparse-view CT = PAT stand-in).
+# The fixed physics D we keep across tutorials 2-5 (sparse-view CT).
 # --------------------------------------------------------------------------- #
 def ct_physics(angles: int, sigma: float = 0.0, size: int = 128):
-    """A normalized sparse-view CT (Radon) operator, our stand-in for the PAT wave
-    operator: linear, ill-posed, limited-view.
+    """A normalized sparse-view CT (Radon) operator: linear, ill-posed, limited-view.
 
     ``normalize=True`` rescales A so that ||A^T A|| ~ 1, which makes a gradient
     stepsize ~ 1 work out of the box (see ``stepsize_for`` below). Pass ``sigma>0``
@@ -172,15 +157,14 @@ def title_psnr(name: str, x_hat: torch.Tensor, x: torch.Tensor) -> str:
 # --------------------------------------------------------------------------- #
 # Figures
 # --------------------------------------------------------------------------- #
-def save_images(imgs, titles=None, fname=None, cmap="gray", cbar=False,
+def show_images(imgs, titles=None, cmap="gray", cbar=False,
                 suptitle=None, figsize=None, **kwargs) -> None:
-    """Plot a row of images via ``deepinv.utils.plot`` and save to ``figures/<fname>``.
+    """Plot a row of images via ``deepinv.utils.plot`` and display it inline.
 
     ``imgs`` is a list of ``(1, 1, H, W)`` tensors (or a ``{title: tensor}`` dict).
     When ``figsize`` is not given it scales with the number of panels so that
     multi-line PSNR titles don't collide (``deepinv.utils.plot`` packs tightly).
     """
-    save_fn = str(FIG_DIR / fname) if fname else None
     if figsize is None:
         n = len(imgs) if hasattr(imgs, "__len__") else 1
         figsize = (max(4.0, 3.3 * n), 4.3 if suptitle else 4.0)
@@ -191,18 +175,15 @@ def save_images(imgs, titles=None, fname=None, cmap="gray", cbar=False,
         cbar=cbar,
         suptitle=suptitle,
         figsize=figsize,
-        save_fn=save_fn,
-        show=False,
+        show=True,
         dpi=150,
         **kwargs,
     )
-    if save_fn:
-        print(f"saved {save_fn}")
 
 
-def save_curves(curves: dict, fname, xlabel="iteration", ylabel="cost",
+def show_curves(curves: dict, xlabel="iteration", ylabel="cost",
                 title=None, logy=True, logx=False, markers=False) -> None:
-    """Convergence / sweep plot in the deck palette; saves ``figures/<fname>``.
+    """Convergence / sweep plot in the deck palette; displayed inline.
 
     ``curves`` maps a label to a sequence of y-values, e.g.
     ``{"ISTA": ista_cost, "FISTA": fista_cost}``. The x-axis is the index unless a
@@ -228,7 +209,4 @@ def save_curves(curves: dict, fname, xlabel="iteration", ylabel="cost",
         ax.set_title(title)
     ax.legend()
     fig.tight_layout()
-    out = str(FIG_DIR / fname)
-    fig.savefig(out, dpi=150)
-    plt.close(fig)
-    print(f"saved {out}")
+    plt.show()
